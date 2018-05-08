@@ -9,53 +9,39 @@
 
 #include "LPS35_I2C.h"
 
-LPS35_I2C::LPS35_I2C(PinName sda, PinName scl, bool sa0) : _i2c(sda, scl)
-{
-    if(sa0 == LPS35_I2C_SA0_HIGH) {
+LPS35_I2C::LPS35_I2C(PinName sda, PinName scl, bool sa0) : _i2c(sda, scl){
+    if(sa0 == LPS35_I2C_SA0_HIGH)
         _address = LPS35_I2C_ADDRESS_SA0_HIGH;
-    } else {
+    else
         _address = LPS35_I2C_ADDRESS_SA0_LOW;
-    }
     _i2c.frequency(400 * 1000);
     _ctrlreg1 = 0x20;
-    _ctrlreg2 = 0x21;
-    _ctrlreg3 = 0x22;//INT
 }
 
-LPS35_I2C::~LPS35_I2C()
-{
+LPS35_I2C::~LPS35_I2C(){
 }
 
-char LPS35_I2C::whoami()
-{
+char LPS35_I2C::whoami(){
     return _read(0x0f);
 }
 
-bool LPS35_I2C::isAvailable()
-{
-    if(whoami() == 0xbb) { return true; }
-    
-    return false;
+bool LPS35_I2C::isAvailable(){
+    if(whoami() == 0xB1)
+    	return true;
+    else
+    	return false;
 }
 
-void LPS35_I2C::setResolution(char pressure_avg, char temp_avg)
-{
-    _write(0x10, ((temp_avg & 0x07) << 4) | (pressure_avg & 0x0f));
-}
-
-void LPS35_I2C::setActive(bool is_active)
-{
-    if(is_active) {
-        _ctrlreg1 |= 0x80;
-    } else {
-        _ctrlreg1 &= ~0x80;
-    }
+void LPS35_I2C::setActive(bool is_active){
+    if(is_active)
+        _ctrlreg1 |= 0x70;
+    else
+        _ctrlreg1 &= 0x08;
 
     _write(0x20, _ctrlreg1);
 }
 
-void LPS35_I2C::setDataRate(char datarate)
-{
+void LPS35_I2C::setDataRate(char datarate){
     datarate &= 0x07;
     
     _ctrlreg1 &= ~(0x07 << 4);
@@ -64,9 +50,7 @@ void LPS35_I2C::setDataRate(char datarate)
     _write(0x20, _ctrlreg1);
 }
 
-    
-float LPS35_I2C::getPressure()
-{
+float LPS35_I2C::getPressure(){
     char data[3];
     float pressure = 0;
 
@@ -80,8 +64,7 @@ float LPS35_I2C::getPressure()
     return pressure;
 }
 
-float LPS35_I2C::getTemperature()
-{
+float LPS35_I2C::getTemperature(){
     char data[2];
     short temp = 0;
     
@@ -94,8 +77,7 @@ float LPS35_I2C::getTemperature()
 }
 
 
-void LPS35_I2C::_write(char subaddress, char data)
-{
+void LPS35_I2C::_write(char subaddress, char data){
     _i2c.start();
     _i2c.write(_address);
     _i2c.write(subaddress);
@@ -103,8 +85,7 @@ void LPS35_I2C::_write(char subaddress, char data)
     _i2c.stop();
 }
 
-char LPS35_I2C::_read(char subaddress)
-{
+char LPS35_I2C::_read(char subaddress){
     char result = 0;
     
     _i2c.start();
@@ -120,8 +101,7 @@ char LPS35_I2C::_read(char subaddress)
     return result;
 }
 
-void LPS35_I2C::_read_multibyte(char startsubaddress, char* data, char count)
-{
+void LPS35_I2C::_read_multibyte(char startsubaddress, char* data, char count){
     _i2c.start();
     _i2c.write(_address);
     _i2c.write(startsubaddress | 0x80);
@@ -129,10 +109,8 @@ void LPS35_I2C::_read_multibyte(char startsubaddress, char* data, char count)
     _i2c.start();
     _i2c.write(_address | 1);
 
-    for(int i = 0; i < count; i++) {
+    for(int i = 0; i < count; i++)
         data[i] = _i2c.read((i == count - 1) ? 0 : 1);
-    }
     
     _i2c.stop();
 }
-
